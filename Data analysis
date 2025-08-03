@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shock Social Analytics Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Assistant:wght@200;300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Assistant', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 400;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 10px;
+            margin: 0;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-top: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .metric-card {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(50, 211, 251, 0.1);
+            border: 1px solid rgba(50, 211, 251, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(50, 211, 251, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .card-icon {
+            font-size: 24px;
+            color: #32D3FB;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(50, 211, 251, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(50, 211, 251, 0.3);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #32D3FB;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 400;
+            color: #ccc;
+            margin-top: 5px;
+        }
+
+        .comparison-section {
+            background: linear-gradient(145deg, #1a1a1a, #2a2a2a);
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 30px;
+            border: 1px solid rgba(50, 211, 251, 0.2);
+        }
+
+        .comparison-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: #32D3FB;
+            margin-bottom: 30px;
+        }
+
+        .before-after {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .before, .after {
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .before {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+        }
+
+        .after {
+            background: rgba(50, 211, 251, 0.1);
+            border: 1px solid rgba(50, 211, 251, 0.3);
+        }
+
+        .period-label {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .impact-number {
+            font-size: 36px;
+            font-weight: 900;
+            margin: 10px 0;
+        }
+
+        .growth-indicator {
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(50, 211, 251, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: #32D3FB;
+            margin-top: 10px;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .before-after {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="metrics-grid">
+            <!-- Brand Awareness Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <div class="card-icon">📈</div>
+                    <div class="card-title">Brand Awareness & Reach</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="brandChart"></canvas>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-value">35%</span>
+                        <div class="stat-label">New Followers</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">200%</span>
+                        <div class="stat-label">Post Reach</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">30%</span>
+                        <div class="stat-label">Brand Mentions</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Website Traffic Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <div class="card-icon">🌐</div>
+                    <div class="card-title">Website Traffic & Leads</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="trafficChart"></canvas>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-value">52.5%</span>
+                        <div class="stat-label">Website Visits</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">30%</span>
+                        <div class="stat-label">Form Submissions</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">25%</span>
+                        <div class="stat-label">Phone Calls</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Engagement Card -->
+            <div class="metric-card">
+                <div class="card-header">
+                    <div class="card-icon">💬</div>
+                    <div class="card-title">Customer Engagement</div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-value">95%</span>
+                        <div class="stat-label">Faster Response</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value" style="font-size: 16px; line-height: 1.2;">⭐⭐⭐⭐⭐</span>
+                        <div class="stat-label">Satisfaction</div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">20%</span>
+                        <div class="stat-label">Repeat Business</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Response Time Comparison -->
+        <div class="comparison-section">
+            <div class="comparison-title">Social Media Investment Impact</div>
+            <div class="chart-container" style="height: 300px;">
+                <canvas id="responseChart"></canvas>
+            </div>
+            <div class="before-after">
+                <div class="before">
+                    <div class="period-label" style="color: #ff6b6b;">WITHOUT SOCIAL MEDIA MANAGER</div>
+                    <div class="impact-number" style="color: #ff6b6b;">2-4 HOURS</div>
+                    <div>Average Response Time</div>
+                </div>
+                <div class="after">
+                    <div class="period-label" style="color: #32D3FB;">WITH SOCIAL MEDIA MANAGER</div>
+                    <div class="impact-number" style="color: #32D3FB;">2-5 MINUTES</div>
+                    <div>Average Response Time</div>
+                    <div class="growth-indicator">
+                        ⚡ 95% IMPROVEMENT
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart.js configuration
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.plugins.legend.labels.color = '#ffffff';
+
+        const brandColors = {
+            primary: '#32D3FB',
+            secondary: '#000000',
+            accent: '#ffffff',
+            gradient: ['#32D3FB', '#1a9cc9', '#0f7599']
+        };
+
+        // Brand Awareness Chart
+        const brandChart = new Chart(document.getElementById('brandChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['New Followers', 'Post Reach Growth', 'Brand Mentions'],
+                datasets: [{
+                    data: [35, 100, 30],
+                    backgroundColor: [
+                        brandColors.primary,
+                        brandColors.gradient[1],
+                        brandColors.gradient[2]
+                    ],
+                    borderColor: '#000',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 20, font: { size: 12 } }
+                    }
+                }
+            }
+        });
+
+        // Website Traffic Chart
+        const trafficChart = new Chart(document.getElementById('trafficChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Website Visits', 'Form Submissions', 'Phone Calls'],
+                datasets: [{
+                    label: 'Growth %',
+                    data: [52.5, 30, 25],
+                    backgroundColor: [
+                        brandColors.primary + '80',
+                        brandColors.primary + '60',
+                        brandColors.primary + '40'
+                    ],
+                    borderColor: brandColors.primary,
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#333' },
+                        ticks: { callback: function(value) { return value + '%'; } }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Customer Engagement Chart
+        const engagementChart = new Chart(document.getElementById('engagementChart'), {
+            type: 'radar',
+            data: {
+                labels: ['Response Speed', 'Customer Satisfaction', 'Repeat Business', 'Engagement Rate', 'Brand Loyalty'],
+                datasets: [{
+                    label: 'Performance Score',
+                    data: [95, 85, 20, 75, 65],
+                    backgroundColor: brandColors.primary + '30',
+                    borderColor: brandColors.primary,
+                    borderWidth: 3,
+                    pointBackgroundColor: brandColors.primary,
+                    pointBorderColor: '#000',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        min: 0,
+                        ticks: {
+                            stepSize: 20,
+                            display: true,
+                            backdropColor: 'transparent',
+                            color: '#666',
+                            font: { size: 10 }
+                        },
+                        grid: { 
+                            color: '#333',
+                            lineWidth: 1
+                        },
+                        angleLines: { 
+                            color: '#333',
+                            lineWidth: 1
+                        },
+                        pointLabels: { 
+                            font: { size: 12, weight: '500' },
+                            color: '#fff',
+                            padding: 15
+                        }
+                    }
+                },
+                layout: {
+                    padding: {
+                        top: 20,
+                        bottom: 20,
+                        left: 20,
+                        right: 20
+                    }
+                }
+            }
+        });
+
+        // Response Time Comparison Chart
+        const responseChart = new Chart(document.getElementById('responseChart'), {
+            type: 'line',
+            data: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                datasets: [
+                    {
+                        label: 'Without Social Media Manager',
+                        data: [180, 165, 190, 175, 185, 170],
+                        borderColor: '#ff6b6b',
+                        backgroundColor: '#ff6b6b30',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    },
+                    {
+                        label: 'With Social Media Manager',
+                        data: [15, 8, 5, 3, 4, 2],
+                        borderColor: brandColors.primary,
+                        backgroundColor: brandColors.primary + '30',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { padding: 20, font: { size: 14 } }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: '#333' },
+                        title: {
+                            display: true,
+                            text: 'Response Time (Minutes)',
+                            color: '#fff'
+                        }
+                    },
+                    x: {
+                        grid: { color: '#333' }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                }
+            }
+        });
+
+        // Add animation effects
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.metric-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(30px)';
+                    card.style.transition = 'all 0.6s ease';
+                    
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 100);
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>
